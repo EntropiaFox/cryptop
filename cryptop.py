@@ -9,6 +9,8 @@ import re
 datafile = os.path.expanduser('~') + '/.cryptop'
 confile = os.path.expanduser('~') + '/.cryptopc'
 p = re.compile('[A-Z]{3},\d{0,}\.?\d{0,}')
+dec = re.compile('(?<=\d)\.(?=\d)')
+decmark = '.'
 
 def if_coin(coin):
 	'''Check if coin exists'''
@@ -48,7 +50,10 @@ yellow
 #banner_text
 black
 #background
--1"""
+-1
+#decseparator (0 for dot, 1 for comma, 2 for space)
+0
+"""
 
 	try:
 		with open(confile, 'r') as f:
@@ -88,9 +93,16 @@ def conf_scr():
 	curses.curs_set(0)
 	curses.start_color()
 	curses.use_default_colors()
-	text, banner, banner_text, background = read_conf_file()
+	text, banner, banner_text, background, decseparator = read_conf_file()
 	curses.init_pair(2, text, background)
 	curses.init_pair(3, banner_text, banner)
+
+	global decmark
+
+	if decseparator == 1:
+		decmark = ','
+	elif decseparator == 2:
+		decmark = ' '
 
 def write_scr(stdscr, coinl, heldl, y, x):
 	'''Write text and formatting to screen'''
@@ -109,14 +121,14 @@ def write_scr(stdscr, coinl, heldl, y, x):
 			for coin,val,held in zip(coinl, coinvl, heldl):
 				if coinl.index(coin)+2 < y:
 					stdscr.addnstr(coinl.index(coin)+2,0,
-						'  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'
+						dec.sub(decmark, '  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'
 						.format(coin, val[0], float(held), float(held)*val[0],
-							val[1], val[2]), x, curses.color_pair(2))
+							val[1], val[2])), x, curses.color_pair(2))
 				total += float(held)*val[0]
 	
 	if y > len(coinl) + 3:
-		stdscr.addnstr(y-2, 0, 'Total Holdings: {:10.2f}    '
-			.format(total), x, curses.color_pair(3))
+		stdscr.addnstr(y-2, 0, dec.sub(decmark, 'Total Holdings: {:10.2f}    '
+			.format(total)), x, curses.color_pair(3))
 		stdscr.addnstr(y-1, 0,
 			'[A] Add coin or update value [R] Remove coin [0]Exit', x,
 			curses.color_pair(2))
